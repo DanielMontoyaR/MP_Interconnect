@@ -5,64 +5,90 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <mutex>
 
 #include "../Include/MemorySave.hpp"
 
 using namespace std;
 
 std::array<std::array<uint8_t, 32>, 4096> shared_memory;
-std::array<std::array<uint8_t, 128>, 128> pe_cache;  // Example for a single PE
+
+using PECache =  std::array<std::array<uint8_t, 128>, 128>;
+
+PECache pe0_cache;
+PECache pe1_cache;
+PECache pe2_cache;
+PECache pe3_cache;
+PECache pe4_cache;
+PECache pe5_cache;
+PECache pe6_cache;
+PECache pe7_cache;
+
+PECache* pe_caches[] = {&pe0_cache, &pe1_cache, &pe2_cache, &pe3_cache, &pe4_cache,&pe5_cache, &pe6_cache, &pe7_cache};
+
+std::mutex shared_memory_mtx;
+
+std::mutex pe0_cache_mtx;
+std::mutex pe1_cache_mtx;
+std::mutex pe2_cache_mtx;
+std::mutex pe3_cache_mtx;
+std::mutex pe4_cache_mtx;
+std::mutex pe5_cache_mtx;
+std::mutex pe6_cache_mtx;
+std::mutex pe7_cache_mtx;
 
 
-/*
-void saveSharedMemoryToFile() {
-    std::ofstream file("MemoryAndCache/shared_memory.txt");
-    if (!file.is_open()) {
-        std::cerr << "Error al abrir shared_memory.txt\n";
-        return;
-    }
-
-    for (size_t block = 0; block < shared_memory.size(); ++block) {
-        //file << "Dirección " << (block*4) << ": ";
-        for (size_t byte = 0; byte < 4; ++byte) {
-            file << std::hex << static_cast<int>(shared_memory[block][byte]) << " ";
-        }
-        file << "\n";
-    }
-    file.close();
-    file.close();
-}
-
-void savePECacheToFile(int pe_id) {
-    std::ostringstream filename;
-    filename << "MemoryAndCache/PE" << pe_id << "_cache.txt";
-    std::ofstream file(filename.str());
-    
-    if (!file.is_open()) {
-        std::cerr << "Error al abrir " << filename.str() << "\n";
-        return;
-    }
-
-    for (size_t block = 0; block < pe_cache.size(); ++block) {
-        //file << "Bloque " << block << ": ";
-        for (size_t byte = 0; byte < 16; ++byte) {
-            file << std::hex << static_cast<int>(pe_cache[block][byte]) << " ";
-        }
-        file << "\n";
-    }
-    file.close();
-}
-
-*/
 
 void write_mem(uint8_t src, uint32_t addr, uint16_t num_of_cache_lines, uint16_t start_cache_line, uint16_t qos){
-    cout << std::hex << "Entrada al write_mem con los parámetros \n src " << src*1 << "\n addr " << addr << "\n num_of_cache_lines " << num_of_cache_lines 
-    << "\n start_cache_line " << start_cache_line << "\n qos " << qos << "\n\n\n\n" << endl;
+    //cout << std::hex << "Entrada al write_mem con los parámetros \n src " << src*1 << "\n addr " << addr << "\n num_of_cache_lines " << num_of_cache_lines 
+    //<< "\n start_cache_line " << start_cache_line << "\n qos " << qos << "\n\n\n\n" << endl;
+    //int memory_adreess = int(addr);
+    int shared_row = addr / 32;
+    int shared_col = addr % 32;
 
-
+    cout << "El valor de fila y columna con la dirección " << std::hex << addr << " son: \nfila: "<< std::dec << shared_row << "\ncolumna: " << shared_col << endl << endl;
     
+    //std::lock(shared_memory_mtx,pe0_cache_mtx,pe1_cache_mtx);
+
+    shared_memory_mtx.lock();
+
+    //int cache_col = 1;
+
+    for(int cache_row = 0; cache_row < num_of_cache_lines; cache_row++){ //Loop for traverse the number of cache lines
+
+        if(pe_caches[src]->at(start_cache_line).at(0) == 1){
+            cout << "Error, line " << start_cache_line << " of PE "<< src*1 <<" is invalid" << endl; //We evaluate the invalidation bit
+            start_cache_line++;
+        }
+        else{
+            
+            for(int cache_col=1; cache_col<127; cache_col++){
+                //cout << "Wrote on line blah blah this " << pe_caches[src]->at(start_cache_line).at(cache_col)*1 << endl;
+                shared_memory[shared_row][shared_col] = pe_caches[src]->at(start_cache_line).at(cache_col)*1;
+                shared_col++;
+
+                if(shared_col==shared_memory[0].size()){
+                    
+                    shared_col=0;
+                    shared_row++;
+                }
+            }
+            start_cache_line++;
+        }
+    }
+
+    shared_memory_mtx.unlock();
+
+
     return;
 }
+
+
+
+
+
+
+
 
 void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
     cout << "Entrada al read_mem" << "\n\n\n\n" << endl;
@@ -71,6 +97,24 @@ void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
 
 void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
     cout << "Entrada al broadcast_invalidate" << "\n\n\n\n" << endl;
+
+    std::lock(pe0_cache_mtx, pe1_cache_mtx, pe2_cache_mtx, pe3_cache_mtx, pe4_cache_mtx, pe5_cache_mtx, pe6_cache_mtx, pe7_cache_mtx);
+
+    for(int PEs = 0; PEs < 8; PEs++){
+
+        pe_caches[PEs]->at(cache_line-1).at(0) = 1;
+
+    }
+
+    pe0_cache_mtx.unlock();
+    pe1_cache_mtx.unlock();
+    pe2_cache_mtx.unlock();
+    pe3_cache_mtx.unlock();
+    pe4_cache_mtx.unlock();
+    pe5_cache_mtx.unlock();
+    pe6_cache_mtx.unlock();
+    pe7_cache_mtx.unlock();
+
     return;
 }
 
@@ -167,23 +211,38 @@ void instructionReader(uint8_t src){
 
 int main() {
     // Inicializar memoria y cachés (ejemplo)
+
+    //First bit of each pe_cache is the invalidation bit
     shared_memory[0][0] = 1;
     shared_memory[0][1] = 0;
     shared_memory[0][2] = 1;
     shared_memory[0][3] = 1;
-    pe_cache[0][0] = 1;
+    pe0_cache[0][0] = 0; //Here we disable the first line.
+    pe0_cache[1][1] = 0; //Here we don't disable the line
+
+    for(int row=0; row<pe0_cache.size();row++){
+        for(int col=0; col<pe0_cache[0].size();col++){
+            pe0_cache[row][col] = 5;
+        }
+    }
+
+    pe0_cache[0][0]= 1;
+    pe0_cache[1][0]= 0;
+
+
+
+
+    //Here we use threads
+    instructionReader(0);
+
 
     // Guardar en archivos
     saveSharedMemoryToFile(shared_memory);
-    
+
     // Suponiendo que tenemos 8 PEs (PE0 a PE7)
     for (int i = 0; i < 8; ++i) {
-        savePECacheToFile(i,pe_cache);
+        savePECacheToFile(i,*pe_caches[i]);
     }
-
-
-    instructionReader(0);
-
 
     return 0;
 }
