@@ -17,6 +17,8 @@ std::array<std::array<uint8_t, 32>, 4096> shared_memory;
 
 using PECache =  std::array<std::array<uint8_t, 128>, 128>;
 
+int stepping = 0;
+
 PECache pe0_cache;
 PECache pe1_cache;
 PECache pe2_cache;
@@ -467,8 +469,6 @@ int main() {
     shared_memory[0][6] = 7;
     shared_memory[0][7] = 8;
 
-    pe0_cache[0][0] = 1; //Here we disable the first line.
-    pe0_cache[1][1] = 0; //Here we don't disable the line
 
     for(int row=0; row<pe0_cache.size();row++){
         for(int col=1; col<pe0_cache[0].size();col++){
@@ -476,6 +476,9 @@ int main() {
         }
     }
 
+    
+    pe0_cache[0][0] = 1; //Here we disable the first line.
+    pe0_cache[1][1] = 0; //Here we don't disable the line
     pe0_cache[0][0]= 1;
     pe0_cache[1][0]= 0;
 
