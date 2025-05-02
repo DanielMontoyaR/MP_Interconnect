@@ -1,0 +1,4 @@
+PE 4 Bandwidth Stats:
+Total Bytes Transferred: 105
+Total Time Spent (s): 0.00612948
+Bandwidth (Bytes/s): 17130.3

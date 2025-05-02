@@ -1,6 +1,7 @@
 #include <fstream>
 #include <array>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -8,6 +9,7 @@
 #include <mutex>
 #include <cmath>
 #include <thread>
+#include <chrono>
 
 #include "../Include/MemorySave.hpp"
 
@@ -45,8 +47,32 @@ std::mutex* pe_cache_mutexes[] = {&pe0_cache_mtx, &pe1_cache_mtx, &pe2_cache_mtx
 
 
 
+struct BandwidthStats {
+    int bytes_transfered = 0;
+    double time_spent = 0.0;
+};
+
+std::unordered_map<uint8_t, BandwidthStats> pe_bandwidth; //Bandwidth map for each PE
 
 
+
+void save_bandwidth_stats() {
+    for (const auto& [pe_id, stats] : pe_bandwidth) {
+        std::string filename = "../PE_Bandwidth/PE" + std::to_string(pe_id) + "_bandwidth.txt";
+        std::ofstream file(filename);
+
+        if (file.is_open()) {
+            double bandwidth = (stats.time_spent > 0) 
+                ? stats.bytes_transfered / stats.time_spent 
+                : 0.0;
+
+            file << "PE " << unsigned(pe_id) << " Bandwidth Stats:\n";
+            file << "Total Bytes Transferred: " << stats.bytes_transfered << "\n";
+            file << "Total Time Spent (s): " << stats.time_spent << "\n";
+            file << "Bandwidth (Bytes/s): " << bandwidth << "\n";
+        }
+    }
+}
 
 
 void PE_logs(int num, const std::string& message) {
@@ -109,6 +135,11 @@ void write_resp(uint8_t dest, uint8_t status, uint16_t qos){
 
 void write_mem(uint8_t src, uint32_t addr, uint16_t num_of_cache_lines, uint16_t start_cache_line, uint16_t qos){
 
+    //For bandwidth calculations
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    
+
     string log = "";
 
     int shared_row = addr / 32;
@@ -141,7 +172,7 @@ void write_mem(uint8_t src, uint32_t addr, uint16_t num_of_cache_lines, uint16_t
 
             //cout << "[PE" << src*1 << "] → WRITE_MEM: Error, cache line " << cache_row << " is invalid" << endl; //We evaluate the invalidation bit
             status = 0x0;   
-
+            
             log = "WRITE_MEM: Error, cache line " + to_string(cache_row) + " is invalid";
             PE_logs(src,log);
 
@@ -174,6 +205,14 @@ void write_mem(uint8_t src, uint32_t addr, uint16_t num_of_cache_lines, uint16_t
     shared_memory_mtx.unlock();
     (*pe_cache_mutexes[src]).unlock();
 
+    uint32_t total_bytes = (num_of_cache_lines * 16)*status;
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    double elapsed = std::chrono::duration<double>(end_time-start_time).count();
+
+    pe_bandwidth[src].bytes_transfered += total_bytes;
+    pe_bandwidth[src].time_spent += elapsed;
 
     return;
 }
@@ -215,6 +254,9 @@ void read_resp(uint8_t dest, std::vector<uint8_t> data, uint16_t qos){
 
 void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
 
+    //For bandwidth calculations
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     string log = "";
 
     //src = src*1;
@@ -235,10 +277,6 @@ void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
     std::vector<uint8_t> data(byte_to_bit);
 
     //cout << "The size in bytes is: " << std::hex << size << ". Its equivalent in decimal is: " << std::dec << byte_to_bit << endl;
-
-
-
-
 
     std::lock(shared_memory_mtx,(*pe_cache_mutexes[src]));
 
@@ -288,6 +326,18 @@ void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
 
     shared_memory_mtx.unlock();
     (*pe_cache_mutexes[src]).unlock();
+
+    uint32_t total_bytes = size;
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    double elapsed = std::chrono::duration<double>(end_time-start_time).count();
+
+    pe_bandwidth[src].bytes_transfered += total_bytes;
+    pe_bandwidth[src].time_spent += elapsed;
+
+
+
 
     return;
 }
@@ -341,6 +391,9 @@ void inv_ack(uint8_t src, uint16_t cache_line, uint16_t qos){
 void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
     
 
+    //For bandwidth calculations
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     std::lock(pe0_cache_mtx, pe1_cache_mtx, pe2_cache_mtx, pe3_cache_mtx, pe4_cache_mtx, pe5_cache_mtx, pe6_cache_mtx, pe7_cache_mtx);
     
     //cout << "[PE"<< src*1 << "] → BROADCAST_INVALIDATE: Process Initiated" << endl;
@@ -368,6 +421,18 @@ void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
     pe5_cache_mtx.unlock();
     pe6_cache_mtx.unlock();
     pe7_cache_mtx.unlock();
+
+
+
+    uint32_t total_bytes = 8;
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    double elapsed = std::chrono::duration<double>(end_time-start_time).count();
+
+    pe_bandwidth[src].bytes_transfered += total_bytes;
+    pe_bandwidth[src].time_spent += elapsed;
+
 
     return;
 }
@@ -523,6 +588,11 @@ int main() {
 
 
     cout << "All operations completed, program finished." << endl;
+
+    save_bandwidth_stats();
+
+    system("python3 BandwidthObserver.py");
+
     return 0;
 }
 
