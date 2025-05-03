@@ -10,6 +10,8 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
+#include <vector>
 
 #include "../Include/MemorySave.hpp"
 
