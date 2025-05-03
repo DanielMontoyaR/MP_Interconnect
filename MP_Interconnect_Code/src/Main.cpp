@@ -10,6 +10,8 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <unordered_map>
+#include <vector>
 
 #include "../Include/MemorySave.hpp"
 
@@ -53,6 +55,8 @@ struct BandwidthStats {
 };
 
 std::unordered_map<uint8_t, BandwidthStats> pe_bandwidth; //Bandwidth map for each PE
+
+
 
 
 
@@ -105,6 +109,37 @@ void PE_logs(int num, const std::string& message) {
     } else {
         std::cerr << "Error al abrir el archivo de log: " << filename << std::endl;
     }
+}
+
+
+
+
+
+
+void stepping_wait(int id) {
+    std::string nombre_archivo = "../Inputs/PE" + std::to_string(id) + "_Input";
+    std::string linea;
+
+    std::cout << "Hilo " << id << " esperando '1' en " << nombre_archivo << "...\n";
+
+    while (true) {
+        std::ifstream archivo(nombre_archivo);
+        if (archivo.is_open()) {
+            std::getline(archivo, linea);
+            archivo.close();
+
+            if (linea == "1") {
+                // Reseteamos a "0"
+                std::ofstream archivo_out(nombre_archivo);
+                archivo_out << "0\n";
+                archivo_out.close();
+                break;
+            }
+        }
+        //std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Espera para no sobrecargar el CPU
+    }
+
+    std::cout << "Hilo " << id << " reanudado\n";
 }
 
 
@@ -484,6 +519,12 @@ void instructionReader(uint8_t src, uint16_t qos){
             uint16_t start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
             
             write_mem(src, addr, num_of_cache_lines, start_cache_line, qos);
+
+            if(stepping == 1){
+                cout << "[PE"<<src*1<<"] WRITE_MEM Operation Finished: Waiting Input" << endl;
+                stepping_wait(src);
+            }
+
         } 
         else if (instruction == "READ_MEM") {
             string addr_str, size_str;
@@ -499,6 +540,11 @@ void instructionReader(uint8_t src, uint16_t qos){
             
 
             read_mem(src ,addr, size, qos);
+
+            if(stepping == 1){
+                cout << "[PE"<<src*1<<"] READ_MEM Operation Finished: Waiting Input" << endl;
+                stepping_wait(src);
+            }
         } 
         else if (instruction == "BROADCAST_INVALIDATE") {
             string line_str;
@@ -508,6 +554,10 @@ void instructionReader(uint8_t src, uint16_t qos){
 
             uint16_t cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
             broadcast_invalidate(src, cache_line, qos);
+            if(stepping == 1){
+                cout << "[PE"<<src*1<<"] BROADCAST_INVALIDATE Operation Finished: Waiting Input" << endl;
+                stepping_wait(src);
+            }
         } 
         else {
             cerr << "Unrecognized instruction: " << instruction << endl;
@@ -522,7 +572,21 @@ void instructionReader(uint8_t src, uint16_t qos){
 
 
 int main() {
+
+
+    //For stepping
+    if(stepping == 1){
+        // Asegura que todos los archivos inician en 0
+        for (int i = 0; i < 8; ++i) {
+            std::ofstream out("../Inputs/PE" + std::to_string(i) + "_Input");
+            out << "0\n";
+        }
+    }
+
+
     // Inicializar memoria y cachés (ejemplo)
+
+    int calendarización = 1;
 
     //First bit of each pe_cache is the invalidation bit
     shared_memory[0][0] = 1;
@@ -591,7 +655,7 @@ int main() {
 
     save_bandwidth_stats();
 
-    system("python3 BandwidthObserver.py");
+    system("python3 ../Graphics/BandwidthObserver.py");
 
     return 0;
 }

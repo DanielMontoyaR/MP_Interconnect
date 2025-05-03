@@ -1,4 +1,4 @@
 PE 3 Bandwidth Stats:
-Total Bytes Transferred: 169
-Total Time Spent (s): 0.00590736
-Bandwidth (Bytes/s): 28608.4
+Total Bytes Transferred: 105
+Total Time Spent (s): 0.00565209
+Bandwidth (Bytes/s): 18577.2

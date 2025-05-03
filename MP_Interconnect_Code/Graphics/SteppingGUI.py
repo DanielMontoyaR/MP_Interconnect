@@ -7,43 +7,13 @@ from PIL import Image, ImageTk, ImageSequence
 
 
 
-
-
-
-
-
-
-
-
-pipe_path = "tmp/continue_pipe"
-def send_signal():
-    if not os.path.exists(pipe_path):
-        print("Pipe no longer exists.")
-        button.config(state=tk.DISABLED)
-        return
-    try:
-        with open(pipe_path, "w") as f:
-            f.write("continue\n")
-    except OSError as e:
-        print(f"Error writing to pipe: {e}")
-        button.config(state=tk.DISABLED)
-
-"""
-root = tk.Tk()
-button = tk.Button(root, text="Continue", command=send_signal)
-button.pack()
-root.mainloop()
-"""
-
-
-
 def main():
 
     def animar_gif(ind):
         frame = frames[ind]
         ind = (ind + 1) % len(frames)
         fondo_label.configure(image=frame)
-        window.after(100, animar_gif, ind)  # ajusta el tiempo según el GIF
+        window.after(100, animar_gif, ind)  # Time adjustment
 
     # Creaccion de la ventana y sus caracteristicas
     window = Tk() 
@@ -88,9 +58,6 @@ def main():
             text_box.delete(1.0, tk.END)
             text_box.insert(tk.END, f"Archivo no encontrado: {archive}")
             text_box.config(state=tk.DISABLED)
-        
-        #Call to update function
-        #window.after(1000, select_memory)
 
 
 
@@ -171,12 +138,46 @@ def main():
     log_scroll_x.place(x=900, y=800, width=750)
 
 
+
+
+
+    def activar_hilo():
+
+        opcion = log_select.get() # "PE0","PE1","PE2","PE3","PE4","PE5","PE6","PE7"
+
+        match opcion:
+            case "PE0":
+                id = 0
+            case "PE1":
+                id = 1
+            case "PE2":
+                id = 2
+            case "PE3":
+                id = 3
+            case "PE4":
+                id = 4
+            case "PE5":
+                id = 5
+            case "PE6":
+                id = 6
+            case "PE7":
+                id = 7
+
+        nombre_archivo = f"../Inputs/PE{id}_Input"
+        with open(nombre_archivo, "w") as f:
+            f.write("1\n")
+        print(f"Thread {id} activated")
+
     def update_text():
         select_log()
         select_memory()
 
     def continue_ops():
-        print("Continuing Operations")
+        select_log()
+        select_memory()
+        activar_hilo()
+
+
 
     Update = Button(window, text='Update', fg='black', bg='white', command=update_text, height=1, width=7) 
     Update.place(x=800,y=50)
