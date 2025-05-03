@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import filedialog
 import tkinter.font as tkFont
 from PIL import Image, ImageTk, ImageSequence
+import time
 
 
 
@@ -173,9 +174,9 @@ def main():
         select_memory()
 
     def continue_ops():
-        select_log()
-        select_memory()
         activar_hilo()
+        time.sleep(1)
+        update_text()
 
 
 

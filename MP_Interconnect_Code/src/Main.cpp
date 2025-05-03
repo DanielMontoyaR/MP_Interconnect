@@ -522,6 +522,8 @@ void instructionReader(uint8_t src, uint16_t qos){
 
             if(stepping == 1){
                 cout << "[PE"<<src*1<<"] WRITE_MEM Operation Finished: Waiting Input" << endl;
+                savePECacheToFile(src,*pe_caches[src]);
+                saveSharedMemoryToFile(shared_memory);
                 stepping_wait(src);
             }
 
@@ -543,6 +545,8 @@ void instructionReader(uint8_t src, uint16_t qos){
 
             if(stepping == 1){
                 cout << "[PE"<<src*1<<"] READ_MEM Operation Finished: Waiting Input" << endl;
+                savePECacheToFile(src,*pe_caches[src]);
+                saveSharedMemoryToFile(shared_memory);
                 stepping_wait(src);
             }
         } 
@@ -556,6 +560,8 @@ void instructionReader(uint8_t src, uint16_t qos){
             broadcast_invalidate(src, cache_line, qos);
             if(stepping == 1){
                 cout << "[PE"<<src*1<<"] BROADCAST_INVALIDATE Operation Finished: Waiting Input" << endl;
+                savePECacheToFile(src,*pe_caches[src]);
+                saveSharedMemoryToFile(shared_memory);
                 stepping_wait(src);
             }
         } 
