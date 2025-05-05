@@ -1,4 +1,4 @@
 PE 2 Bandwidth Stats:
-Total Bytes Transferred: 89
-Total Time Spent (s): 0.0126916
-Bandwidth (Bytes/s): 7012.51
+Total Bytes Transferred: 121
+Total Time Spent (s): 0.0209838
+Bandwidth (Bytes/s): 5766.36
