@@ -90,7 +90,7 @@ struct QoSComparator {
 std::priority_queue<Instruction, std::vector<Instruction>, QoSComparator> qos_queue;
 
 
-enum class MemOpType { READ, WRITE };
+enum class MemOpType { READ, WRITE, BROADCAST_INVALIDATE };
 
 struct MemRequest {
     MemOpType op_type;
@@ -98,6 +98,7 @@ struct MemRequest {
     uint32_t addr;
     uint32_t size; // size or num_of_cache_lines depending on op_type
     uint16_t start_cache_line; // only for write
+    uint16_t cache_line;
     uint16_t qos;
 };
 
@@ -586,8 +587,10 @@ void schedulerExecutor() {
             write_mem(req.src, req.addr, req.size, req.start_cache_line, req.qos);
         } else if (req.op_type == MemOpType::READ) {
             read_mem(req.src, req.addr, req.size, req.qos);
+        } else if (req.op_type == MemOpType::BROADCAST_INVALIDATE){
+            broadcast_invalidate(req.src, req.cache_line, req.qos);
         }
-        // Aquí puedes poner un break si quieres que termine alguna vez
+        
     }
 }
 

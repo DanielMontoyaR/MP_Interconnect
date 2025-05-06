@@ -1,4 +1,4 @@
 PE 6 Bandwidth Stats:
-Total Bytes Transferred: 105
-Total Time Spent (s): 0.00647019
-Bandwidth (Bytes/s): 16228.3
+Total Bytes Transferred: 169
+Total Time Spent (s): 0.00765032
+Bandwidth (Bytes/s): 22090.6

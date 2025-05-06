@@ -1,4 +1,17 @@
 [PE6] → Initiated Operations (QoS=0)
+[PE6] → WRITE_MEM: Process Initiated
+[PE6] → WRITE_MEM: Error, cache line 0 is invalid
+[PE6] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
+[PE6] → WRITE_MEM: Process Initiated
+[PE6] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE6] → WRITE_MEM: Process Initiated
+[PE6] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE6] → READ_MEM: Process Initiated
+[PE6] → READ_RESP: Process Initiated
+[PE6] → READ_RESP: Data wrote to cache memory:
+[PE6] → 12345678
+[PE6] → WRITE_MEM: Process Initiated
+[PE6] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
 [PE6] → BROADCAST_INVALIDATE: Process Initiated
 [PE6] → INV_ACK: Process Initiated
 [PE6] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=0)
@@ -33,21 +46,6 @@
 [PE6] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=0)
 [PE6] → INV_COMPLETE: Invalidation Process Completed
 [PE6] → Finished Operations (QoS=0)
-[PE6] → WRITE_MEM: Process Initiated
-[PE6] → WRITE_MEM: Error, cache line 0 is invalid
-[PE6] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
-[PE6] → WRITE_MEM: Process Initiated
-[PE6] → WRITE_MEM: Error, cache line 1 is invalid
-[PE6] → WRITE_MEM: Error, cache line 2 is invalid
-[PE6] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
-[PE6] → WRITE_MEM: Process Initiated
-[PE6] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
-[PE6] → READ_MEM: Process Initiated
-[PE6] → READ_RESP: Process Initiated
-[PE6] → READ_RESP: Data wrote to cache memory:
-[PE6] → 12345678
-[PE6] → WRITE_MEM: Process Initiated
-[PE6] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
 [PE6] → WRITE_MEM: Process Initiated
 [PE6] → WRITE_MEM: Error, cache line 0 is invalid
 [PE6] → WRITE_MEM: Error, cache line 1 is invalid
