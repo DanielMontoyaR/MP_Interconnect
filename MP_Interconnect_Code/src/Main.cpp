@@ -618,9 +618,9 @@ void instructionReader(uint8_t src, uint16_t qos) {
         string instruction;
         iss >> instruction;
 
-        Instruction instr;
-        instr.src = src;
-        instr.qos = qos;
+        MemRequest req;
+        req.src = src;
+        req.qos = qos;
 
         if (instruction == "WRITE_MEM") {
             string addr_str, n_lines_str, start_line_str;
@@ -629,10 +629,10 @@ void instructionReader(uint8_t src, uint16_t qos) {
             remove_commas(n_lines_str);
             remove_commas(start_line_str);
 
-            instr.type = InstructionType::WRITE;
-            instr.addr = stoul(addr_str, nullptr, 0);
-            instr.num_of_cache_lines = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
-            instr.start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
+            req.op_type = MemOpType::WRITE;
+            req.addr = stoul(addr_str, nullptr, 0);
+            req.size = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
+            req.start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
 
         } else if (instruction == "READ_MEM") {
             string addr_str, size_str;
@@ -640,33 +640,30 @@ void instructionReader(uint8_t src, uint16_t qos) {
             remove_commas(addr_str);
             remove_commas(size_str);
 
-            instr.type = InstructionType::READ;
-            instr.addr = stoul(addr_str, nullptr, 0);
-            instr.size = stoul(size_str, nullptr, 0);
+            req.op_type = MemOpType::READ;
+            req.addr = stoul(addr_str, nullptr, 0);
+            req.size = static_cast<uint16_t>(stoul(size_str, nullptr, 0));
 
         } else if (instruction == "BROADCAST_INVALIDATE") {
             string line_str;
             iss >> line_str;
+
             remove_commas(line_str);
 
-            instr.type = InstructionType::BROADCAST_INVALIDATE;
-            instr.cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
-
+            uint16_t cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
+            broadcast_invalidate(src, cache_line, qos);
+            continue;
         } else {
             cerr << "Unrecognized instruction: " << instruction << endl;
             continue;
         }
 
-        // Encolar instrucción
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex);
-            instruction_queue.push(instr);
-        }
-        queue_cv.notify_one(); // Notificar al scheduler
+        // Enviar solicitud al scheduler
+        scheduler.submit_request(req);
 
         // Comportamiento stepping (después de encolar)
         if (stepping == 1) {
-            cout << "[PE" << src * 1 << "] " << instruction << " Operation Enqueued: Waiting Input" << endl;
+            cout << "[PE" << src << "] " << instruction << " Operation Enqueued: Waiting Input" << endl;
             savePECacheToFile(src, *pe_caches[src]);
             saveSharedMemoryToFile(shared_memory);
             stepping_wait(src);
@@ -676,6 +673,7 @@ void instructionReader(uint8_t src, uint16_t qos) {
     file.close();
     PE_logs(src, "Finished Operations (QoS=" + to_string(qos) + ")");
 }
+
 
 
 
@@ -779,4 +777,3 @@ int main() {
 
     return 0;
 }
-

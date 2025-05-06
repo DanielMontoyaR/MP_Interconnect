@@ -1,4 +1,4 @@
 PE 1 Bandwidth Stats:
-Total Bytes Transferred: 185
-Total Time Spent (s): 0.0201878
-Bandwidth (Bytes/s): 9163.93
+Total Bytes Transferred: 105
+Total Time Spent (s): 0.0068683
+Bandwidth (Bytes/s): 15287.6
