@@ -1,4 +1,10 @@
 PE 6 Bandwidth Stats:
+<<<<<<< HEAD
 Total Bytes Transferred: 185
 Total Time Spent (s): 0.00217641
 Bandwidth (Bytes/s): 85002.2
+=======
+Total Bytes Transferred: 169
+Total Time Spent (s): 0.00765032
+Bandwidth (Bytes/s): 22090.6
+>>>>>>> Calendar

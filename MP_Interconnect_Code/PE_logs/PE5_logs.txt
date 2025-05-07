@@ -1,4 +1,5 @@
 [PE5] → Initiated Operations (QoS=0)
+<<<<<<< HEAD
 [PE5] → WRITE_MEM: Process Initiated
 [PE5] → WRITE_MEM: Error, cache line 0 is invalid
 [PE5] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
@@ -14,6 +15,8 @@
 [PE5] → 12345678
 [PE5] → WRITE_MEM: Process Initiated
 [PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+=======
+>>>>>>> Calendar
 [PE5] → BROADCAST_INVALIDATE: Process Initiated
 [PE5] → INV_ACK: Process Initiated
 [PE5] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=0)
@@ -25,6 +28,19 @@
 [PE5] → [PE6] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=0)
 [PE5] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=0)
 [PE5] → INV_COMPLETE: Invalidation Process Completed
+[PE5] → WRITE_MEM: Process Initiated
+[PE5] → WRITE_MEM: Error, cache line 0 is invalid
+[PE5] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
+[PE5] → WRITE_MEM: Process Initiated
+[PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE5] → WRITE_MEM: Process Initiated
+[PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE5] → READ_MEM: Process Initiated
+[PE5] → READ_RESP: Process Initiated
+[PE5] → READ_RESP: Data wrote to cache memory:
+[PE5] → 12345678
+[PE5] → WRITE_MEM: Process Initiated
+[PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
 [PE5] → BROADCAST_INVALIDATE: Process Initiated
 [PE5] → INV_ACK: Process Initiated
 [PE5] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=0)
@@ -47,6 +63,7 @@
 [PE5] → [PE6] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=0)
 [PE5] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=0)
 [PE5] → INV_COMPLETE: Invalidation Process Completed
+[PE5] → Finished Operations (QoS=0)
 [PE5] → WRITE_MEM: Process Initiated
 [PE5] → WRITE_MEM: Error, cache line 0 is invalid
 [PE5] → WRITE_MEM: Error, cache line 1 is invalid
@@ -56,4 +73,3 @@
 [PE5] → READ_RESP: Process Initiated
 [PE5] → READ_RESP: Data wrote to cache memory:
 [PE5] → 123456780000000000000000000000000000000000000000000000001234567800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-[PE5] → Finished Operations (QoS=0)

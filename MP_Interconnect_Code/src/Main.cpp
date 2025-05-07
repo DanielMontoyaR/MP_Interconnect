@@ -7,11 +7,20 @@
 #include <sstream>
 #include <algorithm>
 #include <mutex>
+#include <iomanip>  
 #include <cmath>
 #include <thread>
 #include <chrono>
 #include <unordered_map>
 #include <vector>
+#include <queue>
+#include <condition_variable>
+#include <atomic>
+#include <functional>
+#include <compare>
+
+
+
 
 #include "../Include/MemorySave.hpp"
 
@@ -46,6 +55,108 @@ std::mutex pe6_cache_mtx;
 std::mutex pe7_cache_mtx;
 
 std::mutex* pe_cache_mutexes[] = {&pe0_cache_mtx, &pe1_cache_mtx, &pe2_cache_mtx, &pe3_cache_mtx, &pe4_cache_mtx, &pe5_cache_mtx, &pe6_cache_mtx, &pe7_cache_mtx};
+
+enum class InstructionType {
+    WRITE,
+    READ,
+    BROADCAST_INVALIDATE
+};
+
+struct Instruction {
+    InstructionType type;
+    uint8_t src;
+    uint32_t addr;
+    uint16_t qos;
+
+    // Para WRITE_MEM
+    uint16_t num_of_cache_lines = 0;
+    uint16_t start_cache_line = 0;
+
+    // Para READ_MEM
+    uint32_t size = 0;
+
+    // Para BROADCAST_INVALIDATE
+    uint16_t cache_line = 0;
+};
+
+std::queue<Instruction> instruction_queue;
+std::mutex queue_mutex;
+std::condition_variable queue_cv;
+
+struct QoSComparator {
+    bool operator()(const Instruction& a, const Instruction& b) {
+        return a.qos < b.qos; // Mayor QoS = mayor prioridad
+    }
+};
+
+std::priority_queue<Instruction, std::vector<Instruction>, QoSComparator> qos_queue;
+
+
+enum class MemOpType { READ, WRITE, BROADCAST_INVALIDATE };
+
+struct MemRequest {
+    MemOpType op_type;
+    uint8_t src;
+    uint32_t addr;
+    uint32_t size; // size or num_of_cache_lines depending on op_type
+    uint16_t start_cache_line; // only for write
+    uint16_t cache_line;
+    uint16_t qos;
+};
+
+
+
+
+
+bool all_instructions_loaded = false;
+
+
+class SchedulerWrapper {
+private:
+    queue<MemRequest> fifo_queue;
+    priority_queue<MemRequest, vector<MemRequest>, function<bool(const MemRequest&, const MemRequest&)>> qos_queue;
+    bool use_fifo;
+    mutex queue_mutex;
+    condition_variable cv;
+
+public:
+    SchedulerWrapper(bool use_fifo_policy)
+        : use_fifo(use_fifo_policy),
+          qos_queue([](const MemRequest& a, const MemRequest& b) {
+              return a.qos < b.qos; // Higher QoS first
+          }) {}
+
+    void submit_request(const MemRequest& req) {
+        unique_lock<mutex> lock(queue_mutex);
+        cout << "[ENCOLADO] PE" << unsigned(req.src) 
+         << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;
+        if (use_fifo)
+            fifo_queue.push(req);
+        else
+            qos_queue.push(req);
+        cv.notify_one();
+    }
+
+    bool has_request() {
+        return !fifo_queue.empty() || !qos_queue.empty();
+    }
+
+    MemRequest get_next_request() {
+        unique_lock<mutex> lock(queue_mutex);
+        cv.wait(lock, [&] { return has_request(); });
+        MemRequest req = use_fifo ? fifo_queue.front() : qos_queue.top();
+        if (use_fifo)
+            fifo_queue.pop();
+        else
+            qos_queue.pop();
+        return req;
+    }
+};
+
+SchedulerWrapper scheduler(/*use_fifo_policy=*/true); // Cambia a false si quieres usar QoS
+mutex mem_mutex;
+
+
 
 
 
@@ -472,28 +583,37 @@ void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
     return;
 }
 
+void schedulerExecutor() {
+    while (true) {
+        MemRequest req = scheduler.get_next_request();
+        cout << "[EJECUTANDO] PE" << unsigned(req.src) 
+        << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;        lock_guard<mutex> lock(mem_mutex);
+        if (req.op_type == MemOpType::WRITE) {
+            write_mem(req.src, req.addr, req.size, req.start_cache_line, req.qos);
+        } else if (req.op_type == MemOpType::READ) {
+            read_mem(req.src, req.addr, req.size, req.qos);
+        } else if (req.op_type == MemOpType::BROADCAST_INVALIDATE){
+            broadcast_invalidate(req.src, req.cache_line, req.qos);
+        }
+        
+    }
+}
 
 
-void instructionReader(uint8_t src, uint16_t qos){
 
-    //uint16_t qos = 0; // For testing until we implement qos.
 
-    //cout << "[PE"<< src*1 << "] → Initiated Operations" << " (QoS=" << qos << ")"  << endl;
-    
-    PE_logs(src, "666"); //To clear log history
-
+void instructionReader(uint8_t src, uint16_t qos) {
+    PE_logs(src, "666"); // Clear log history
     PE_logs(src, "Initiated Operations (QoS=" + to_string(qos) + ")");
 
     string filename = "../Workloads/PE" + to_string(src) + "_Instructions.txt";
-
     ifstream file(filename);
 
-    if(!file.is_open()){
-        cerr <<  "Error opening: " << filename << endl;
+    if (!file.is_open()) {
+        cerr << "Error opening: " << filename << endl;
         return;
     }
 
-    // Quitar comas si existen
     auto remove_commas = [](std::string &s) {
         s.erase(std::remove(s.begin(), s.end(), ','), s.end());
     };
@@ -506,51 +626,33 @@ void instructionReader(uint8_t src, uint16_t qos){
         string instruction;
         iss >> instruction;
 
+        MemRequest req;
+        req.src = src;
+        req.qos = qos;
+
         if (instruction == "WRITE_MEM") {
             string addr_str, n_lines_str, start_line_str;
             iss >> addr_str >> n_lines_str >> start_line_str;
-
             remove_commas(addr_str);
             remove_commas(n_lines_str);
             remove_commas(start_line_str);
 
-            uint32_t addr = stoul(addr_str, nullptr, 0);
-            uint16_t num_of_cache_lines = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
-            uint16_t start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
-            
-            write_mem(src, addr, num_of_cache_lines, start_cache_line, qos);
+            req.op_type = MemOpType::WRITE;
+            req.addr = stoul(addr_str, nullptr, 0);
+            req.size = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
+            req.start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
 
-            if(stepping == 1){
-                cout << "[PE"<<src*1<<"] WRITE_MEM Operation Finished: Waiting Input" << endl;
-                savePECacheToFile(src,*pe_caches[src]);
-                saveSharedMemoryToFile(shared_memory);
-                stepping_wait(src);
-            }
-
-        } 
-        else if (instruction == "READ_MEM") {
+        } else if (instruction == "READ_MEM") {
             string addr_str, size_str;
             iss >> addr_str >> size_str;
-
-
             remove_commas(addr_str);
             remove_commas(size_str);
 
-            uint32_t addr = stoul(addr_str, nullptr, 0);
-            uint32_t size = stoul(size_str, nullptr, 0);
-            
-            
+            req.op_type = MemOpType::READ;
+            req.addr = stoul(addr_str, nullptr, 0);
+            req.size = static_cast<uint16_t>(stoul(size_str, nullptr, 0));
 
-            read_mem(src ,addr, size, qos);
-
-            if(stepping == 1){
-                cout << "[PE"<<src*1<<"] READ_MEM Operation Finished: Waiting Input" << endl;
-                savePECacheToFile(src,*pe_caches[src]);
-                saveSharedMemoryToFile(shared_memory);
-                stepping_wait(src);
-            }
-        } 
-        else if (instruction == "BROADCAST_INVALIDATE") {
+        } else if (instruction == "BROADCAST_INVALIDATE") {
             string line_str;
             iss >> line_str;
 
@@ -558,23 +660,32 @@ void instructionReader(uint8_t src, uint16_t qos){
 
             uint16_t cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
             broadcast_invalidate(src, cache_line, qos);
-            if(stepping == 1){
-                cout << "[PE"<<src*1<<"] BROADCAST_INVALIDATE Operation Finished: Waiting Input" << endl;
-                savePECacheToFile(src,*pe_caches[src]);
-                saveSharedMemoryToFile(shared_memory);
-                stepping_wait(src);
-            }
-        } 
-        else {
+            continue;
+        } else {
             cerr << "Unrecognized instruction: " << instruction << endl;
+            continue;
+        }
+
+        // Enviar solicitud al scheduler
+        scheduler.submit_request(req);
+
+        // Comportamiento stepping (después de encolar)
+        if (stepping == 1) {
+            cout << "[PE" << src << "] " << instruction << " Operation Enqueued: Waiting Input" << endl;
+            savePECacheToFile(src, *pe_caches[src]);
+            saveSharedMemoryToFile(shared_memory);
+            stepping_wait(src);
         }
     }
 
     file.close();
-    //cout << "[PE"<< src*1 << "] → Finished Operations" << " (QoS=" << qos << ")"  << endl;
-
     PE_logs(src, "Finished Operations (QoS=" + to_string(qos) + ")");
 }
+
+
+
+
+
 
 
 int main() {
@@ -593,6 +704,7 @@ int main() {
     // Inicializar memoria y cachés (ejemplo)
 
     int calendarización = 1;
+
 
     //First bit of each pe_cache is the invalidation bit
     shared_memory[0][0] = 1;
@@ -619,20 +731,29 @@ int main() {
 
 
     uint8_t src = 0;
-    uint16_t qos = 0x00;
 
-    //Here we use threads (of for each PE)
-    //instructionReader(src,qos);
-
+    uint16_t qos = 0x0;
+ 
+    // Orden descendente 
+    const std::array<uint16_t, 8> pe_qos_values = {
+        0x00, // PE0 - mínima prioridad
+        0x24, // PE1
+        0x48, // PE2
+        0x6C, // PE3
+        0x90, // PE4
+        0xB4, // PE5
+        0xD8, // PE6
+        0xFC  // PE7 - máxima prioridad
+    };
     
-    std::thread PE0(instructionReader,0,qos);
-    std::thread PE1(instructionReader,1,qos);
-    std::thread PE2(instructionReader,2,qos);
-    std::thread PE3(instructionReader,3,qos);
-    std::thread PE4(instructionReader,4,qos);
-    std::thread PE5(instructionReader,5,qos);
-    std::thread PE6(instructionReader,6,qos);
-    std::thread PE7(instructionReader,7,qos);
+    std::thread PE0(instructionReader,0,pe_qos_values[0]);
+    std::thread PE1(instructionReader,1,pe_qos_values[1]);
+    std::thread PE2(instructionReader,2,pe_qos_values[2]);
+    std::thread PE3(instructionReader,3,pe_qos_values[3]);
+    std::thread PE4(instructionReader,4,pe_qos_values[4]);
+    std::thread PE5(instructionReader,5,pe_qos_values[5]);
+    std::thread PE6(instructionReader,6,pe_qos_values[6]);
+    std::thread PE7(instructionReader,7,pe_qos_values[7]);
 
 
     PE0.join();
@@ -643,10 +764,15 @@ int main() {
     PE5.join();
     PE6.join();
     PE7.join();
+
+    std::thread scheduler_thread(schedulerExecutor);
     
 
     //cout << "El tamaño del cache es: " << pe0_cache[0].size() <<endl;
     //pe0_cache[0][pe0_cache[0].size()] = 7;
+
+    scheduler_thread.detach(); // o usa un mecanismo de apagado si quieres terminarlo
+
 
     // Guardar en archivos
     saveSharedMemoryToFile(shared_memory);
@@ -665,5 +791,3 @@ int main() {
 
     return 0;
 }
-
-

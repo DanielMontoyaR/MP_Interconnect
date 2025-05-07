@@ -1,4 +1,9 @@
 PE 0 Bandwidth Stats:
 Total Bytes Transferred: 113
+<<<<<<< HEAD
 Total Time Spent (s): 0.0059567
 Bandwidth (Bytes/s): 18970.2
+=======
+Total Time Spent (s): 0.00109178
+Bandwidth (Bytes/s): 103501
+>>>>>>> Calendar
