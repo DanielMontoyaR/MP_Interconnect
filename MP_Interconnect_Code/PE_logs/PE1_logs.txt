@@ -12,7 +12,8 @@
 [PE1] → READ_RESP: Data wrote to cache memory:
 [PE1] → 12345678
 [PE1] → WRITE_MEM: Process Initiated
-[PE1] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE1] → WRITE_MEM: Error, cache line 0 is invalid
+[PE1] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
 [PE1] → BROADCAST_INVALIDATE: Process Initiated
 [PE1] → INV_ACK: Process Initiated
 [PE1] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=0)
