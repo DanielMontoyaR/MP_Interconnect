@@ -7,6 +7,7 @@
 #include <sstream>
 #include <algorithm>
 #include <mutex>
+#include <iomanip>  
 #include <cmath>
 #include <thread>
 #include <chrono>
@@ -17,6 +18,7 @@
 #include <atomic>
 #include <functional>
 #include <compare>
+
 
 
 
@@ -126,6 +128,8 @@ public:
 
     void submit_request(const MemRequest& req) {
         unique_lock<mutex> lock(queue_mutex);
+        cout << "[ENCOLADO] PE" << unsigned(req.src) 
+         << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;
         if (use_fifo)
             fifo_queue.push(req);
         else
@@ -582,7 +586,8 @@ void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
 void schedulerExecutor() {
     while (true) {
         MemRequest req = scheduler.get_next_request();
-        lock_guard<mutex> lock(mem_mutex);
+        cout << "[EJECUTANDO] PE" << unsigned(req.src) 
+        << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;        lock_guard<mutex> lock(mem_mutex);
         if (req.op_type == MemOpType::WRITE) {
             write_mem(req.src, req.addr, req.size, req.start_cache_line, req.qos);
         } else if (req.op_type == MemOpType::READ) {
@@ -726,25 +731,29 @@ int main() {
 
 
     uint8_t src = 0;
-    uint16_t qos = 0x00;
 
-    //Here we use threads (of for each PE)
-    //instructionReader(src,qos);
-
-    std::thread scheduler_thread(schedulerExecutor);
-
-
-
-
+    uint16_t qos = 0x0;
+ 
+    // Orden descendente 
+    const std::array<uint16_t, 8> pe_qos_values = {
+        0x00, // PE0 - mínima prioridad
+        0x24, // PE1
+        0x48, // PE2
+        0x6C, // PE3
+        0x90, // PE4
+        0xB4, // PE5
+        0xD8, // PE6
+        0xFC  // PE7 - máxima prioridad
+    };
     
-    std::thread PE0(instructionReader,0,qos);
-    std::thread PE1(instructionReader,1,qos);
-    std::thread PE2(instructionReader,2,qos);
-    std::thread PE3(instructionReader,3,qos);
-    std::thread PE4(instructionReader,4,qos);
-    std::thread PE5(instructionReader,5,qos);
-    std::thread PE6(instructionReader,6,qos);
-    std::thread PE7(instructionReader,7,qos);
+    std::thread PE0(instructionReader,0,pe_qos_values[0]);
+    std::thread PE1(instructionReader,1,pe_qos_values[1]);
+    std::thread PE2(instructionReader,2,pe_qos_values[2]);
+    std::thread PE3(instructionReader,3,pe_qos_values[3]);
+    std::thread PE4(instructionReader,4,pe_qos_values[4]);
+    std::thread PE5(instructionReader,5,pe_qos_values[5]);
+    std::thread PE6(instructionReader,6,pe_qos_values[6]);
+    std::thread PE7(instructionReader,7,pe_qos_values[7]);
 
 
     PE0.join();
@@ -755,6 +764,8 @@ int main() {
     PE5.join();
     PE6.join();
     PE7.join();
+
+    std::thread scheduler_thread(schedulerExecutor);
     
 
     //cout << "El tamaño del cache es: " << pe0_cache[0].size() <<endl;
