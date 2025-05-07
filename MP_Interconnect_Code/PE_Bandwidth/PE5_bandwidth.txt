@@ -1,4 +1,4 @@
 PE 5 Bandwidth Stats:
-Total Bytes Transferred: 185
-Total Time Spent (s): 0.00577362
-Bandwidth (Bytes/s): 32042.3
+Total Bytes Transferred: 105
+Total Time Spent (s): 0.00584834
+Bandwidth (Bytes/s): 17953.8

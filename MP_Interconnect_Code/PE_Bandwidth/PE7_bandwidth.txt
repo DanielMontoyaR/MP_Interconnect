@@ -1,4 +1,4 @@
 PE 7 Bandwidth Stats:
 Total Bytes Transferred: 105
-Total Time Spent (s): 0.00528743
-Bandwidth (Bytes/s): 19858.4
+Total Time Spent (s): 0.00624612
+Bandwidth (Bytes/s): 16810.4

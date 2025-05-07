@@ -1,8 +1,11 @@
 [PE5] → Initiated Operations (QoS=0)
 [PE5] → WRITE_MEM: Process Initiated
-[PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE5] → WRITE_MEM: Error, cache line 0 is invalid
+[PE5] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
 [PE5] → WRITE_MEM: Process Initiated
-[PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE5] → WRITE_MEM: Error, cache line 1 is invalid
+[PE5] → WRITE_MEM: Error, cache line 2 is invalid
+[PE5] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
 [PE5] → WRITE_MEM: Process Initiated
 [PE5] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
 [PE5] → READ_MEM: Process Initiated
