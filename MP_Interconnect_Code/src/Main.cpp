@@ -163,6 +163,7 @@ mutex mem_mutex;
 struct BandwidthStats {
     int bytes_transfered = 0;
     double time_spent = 0.0;
+    double shared_memory_access_time = 0.0;
 };
 
 std::unordered_map<uint8_t, BandwidthStats> pe_bandwidth; //Bandwidth map for each PE
@@ -185,6 +186,7 @@ void save_bandwidth_stats() {
             file << "Total Bytes Transferred: " << stats.bytes_transfered << "\n";
             file << "Total Time Spent (s): " << stats.time_spent << "\n";
             file << "Bandwidth (Bytes/s): " << bandwidth << "\n";
+            file << "Shared Memory Access Time: " << stats.shared_memory_access_time << "\n";
         }
     }
 }
@@ -359,6 +361,16 @@ void write_mem(uint8_t src, uint32_t addr, uint16_t num_of_cache_lines, uint16_t
 
     pe_bandwidth[src].bytes_transfered += total_bytes;
     pe_bandwidth[src].time_spent += elapsed;
+    pe_bandwidth[src].shared_memory_access_time += elapsed;
+
+
+    // Comportamiento stepping (después de encolar)
+    if (stepping == 1) {
+        cout << "[PE" << src << "] " << "WRITE_MEM" << " Operation Enqueued: Waiting Input" << endl;
+        savePECacheToFile(src, *pe_caches[src]);
+        saveSharedMemoryToFile(shared_memory);
+        stepping_wait(src);
+    }
 
     return;
 }
@@ -481,6 +493,17 @@ void read_mem(uint8_t src, uint32_t addr, uint32_t size, uint16_t qos){
 
     pe_bandwidth[src].bytes_transfered += total_bytes;
     pe_bandwidth[src].time_spent += elapsed;
+    pe_bandwidth[src].shared_memory_access_time += elapsed;
+
+
+    // Comportamiento stepping (después de encolar)
+    if (stepping == 1) {
+        cout << "[PE" << src << "] " << "READ_MEM" << " Operation Enqueued: Waiting Input" << endl;
+        savePECacheToFile(src, *pe_caches[src]);
+        saveSharedMemoryToFile(shared_memory);
+        stepping_wait(src);
+    }
+
 
 
 
@@ -580,6 +603,15 @@ void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
     pe_bandwidth[src].time_spent += elapsed;
 
 
+    // Comportamiento stepping (después de encolar)
+    if (stepping == 1) {
+        cout << "[PE" << src << "] " << "BROADCAST_INVALIDATE" << " Operation Enqueued: Waiting Input" << endl;
+        savePECacheToFile(src, *pe_caches[src]);
+        saveSharedMemoryToFile(shared_memory);
+        stepping_wait(src);
+    }
+
+
     return;
 }
 
@@ -589,10 +621,13 @@ void schedulerExecutor() {
         cout << "[EJECUTANDO] PE" << unsigned(req.src) 
         << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;        lock_guard<mutex> lock(mem_mutex);
         if (req.op_type == MemOpType::WRITE) {
+            cout << "Write_EXEC" << endl;
             write_mem(req.src, req.addr, req.size, req.start_cache_line, req.qos);
         } else if (req.op_type == MemOpType::READ) {
+            cout << "Read_EXEC" << endl;
             read_mem(req.src, req.addr, req.size, req.qos);
         } else if (req.op_type == MemOpType::BROADCAST_INVALIDATE){
+            cout << "BCI_EXEC" << endl;
             broadcast_invalidate(req.src, req.cache_line, req.qos);
         }
         
@@ -641,6 +676,7 @@ void instructionReader(uint8_t src, uint16_t qos) {
             req.addr = stoul(addr_str, nullptr, 0);
             req.size = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
             req.start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
+            cout << "WritE_mem" << endl;
 
         } else if (instruction == "READ_MEM") {
             string addr_str, size_str;
@@ -651,6 +687,8 @@ void instructionReader(uint8_t src, uint16_t qos) {
             req.op_type = MemOpType::READ;
             req.addr = stoul(addr_str, nullptr, 0);
             req.size = static_cast<uint16_t>(stoul(size_str, nullptr, 0));
+            cout << "ReAD_mem" << endl;
+
 
         } else if (instruction == "BROADCAST_INVALIDATE") {
             string line_str;
@@ -659,23 +697,22 @@ void instructionReader(uint8_t src, uint16_t qos) {
             remove_commas(line_str);
 
             uint16_t cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
-            broadcast_invalidate(src, cache_line, qos);
-            continue;
+            //broadcast_invalidate(src, cache_line, qos);
+            req.op_type = MemOpType::BROADCAST_INVALIDATE;
+            req.addr = stoul(line_str, nullptr, 0);
+            cout << "Broke ASS invalidor" << endl;
+            //continue;
         } else {
             cerr << "Unrecognized instruction: " << instruction << endl;
             continue;
         }
 
+        
+
+        
+
         // Enviar solicitud al scheduler
         scheduler.submit_request(req);
-
-        // Comportamiento stepping (después de encolar)
-        if (stepping == 1) {
-            cout << "[PE" << src << "] " << instruction << " Operation Enqueued: Waiting Input" << endl;
-            savePECacheToFile(src, *pe_caches[src]);
-            saveSharedMemoryToFile(shared_memory);
-            stepping_wait(src);
-        }
     }
 
     file.close();
@@ -719,7 +756,14 @@ int main() {
 
     for(int row=0; row<pe0_cache.size();row++){
         for(int col=1; col<pe0_cache[0].size();col++){
-            pe0_cache[row][col] = 5;
+            pe0_cache[row][col] = 0;
+            pe1_cache[row][col] = 1;
+            pe2_cache[row][col] = 2;
+            pe3_cache[row][col] = 3;
+            pe4_cache[row][col] = 4;
+            pe5_cache[row][col] = 5;
+            pe6_cache[row][col] = 6;
+            pe7_cache[row][col] = 7;
         }
     }
 
@@ -771,7 +815,7 @@ int main() {
     //cout << "El tamaño del cache es: " << pe0_cache[0].size() <<endl;
     //pe0_cache[0][pe0_cache[0].size()] = 7;
 
-    scheduler_thread.detach(); // o usa un mecanismo de apagado si quieres terminarlo
+    scheduler_thread.join(); // o usa un mecanismo de apagado si quieres terminarlo
 
 
     // Guardar en archivos
@@ -788,6 +832,9 @@ int main() {
     save_bandwidth_stats();
 
     system("python3 ../Graphics/BandwidthObserver.py");
+    system("python3 ../Graphics/BytesAndTime.py");
+    system("python3 ../Graphics/SharedMemoryTimeAccess.py");
+
 
     return 0;
 }

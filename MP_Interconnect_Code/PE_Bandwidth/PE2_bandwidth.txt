@@ -1,9 +1,5 @@
 PE 2 Bandwidth Stats:
-Total Bytes Transferred: 105
-<<<<<<< HEAD
-Total Time Spent (s): 0.00358422
-Bandwidth (Bytes/s): 29295.1
-=======
-Total Time Spent (s): 0.00433643
-Bandwidth (Bytes/s): 24213.5
->>>>>>> Calendar
+Total Bytes Transferred: 169
+Total Time Spent (s): 0.00119968
+Bandwidth (Bytes/s): 140871
+Shared Memory Access Time: 0.00059436

@@ -1,10 +1,5 @@
 PE 4 Bandwidth Stats:
-<<<<<<< HEAD
-Total Bytes Transferred: 185
-Total Time Spent (s): 0.00576184
-Bandwidth (Bytes/s): 32107.8
-=======
 Total Bytes Transferred: 169
-Total Time Spent (s): 0.00642187
-Bandwidth (Bytes/s): 26316.3
->>>>>>> Calendar
+Total Time Spent (s): 0.00103609
+Bandwidth (Bytes/s): 163113
+Shared Memory Access Time: 0.000488079

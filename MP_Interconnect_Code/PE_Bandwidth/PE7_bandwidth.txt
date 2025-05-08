@@ -1,9 +1,5 @@
 PE 7 Bandwidth Stats:
-Total Bytes Transferred: 105
-<<<<<<< HEAD
-Total Time Spent (s): 0.00624612
-Bandwidth (Bytes/s): 16810.4
-=======
-Total Time Spent (s): 0.01564
-Bandwidth (Bytes/s): 6713.55
->>>>>>> Calendar
+Total Bytes Transferred: 169
+Total Time Spent (s): 0.000807792
+Bandwidth (Bytes/s): 209212
+Shared Memory Access Time: 0.000404307

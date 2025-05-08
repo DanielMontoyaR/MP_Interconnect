@@ -41,12 +41,13 @@ plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
+
 # --- Plot 2: Total Time Spent ---
 plt.figure(figsize=(10, 6))
 plt.bar([f'PE {pe}' for pe in pes], time_spent, color='coral')
 plt.xlabel('Processing Element (PE)')
 plt.ylabel('Total Time Spent (s)')
-plt.title('Tiempo total by PE')
+plt.title('Total time by PE')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()

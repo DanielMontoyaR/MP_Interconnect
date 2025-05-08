@@ -1,10 +1,5 @@
 PE 5 Bandwidth Stats:
-<<<<<<< HEAD
-Total Bytes Transferred: 105
-Total Time Spent (s): 0.00584834
-Bandwidth (Bytes/s): 17953.8
-=======
 Total Bytes Transferred: 169
-Total Time Spent (s): 0.00534797
-Bandwidth (Bytes/s): 31600.8
->>>>>>> Calendar
+Total Time Spent (s): 0.000963866
+Bandwidth (Bytes/s): 175336
+Shared Memory Access Time: 0.000462172
