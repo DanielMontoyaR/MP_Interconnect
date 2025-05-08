@@ -1,5 +1,5 @@
 PE 4 Bandwidth Stats:
-Total Bytes Transferred: 169
-Total Time Spent (s): 0.00103609
-Bandwidth (Bytes/s): 163113
-Shared Memory Access Time: 0.000488079
+Total Bytes Transferred: 89
+Total Time Spent (s): 0.000524421
+Bandwidth (Bytes/s): 169711
+Shared Memory Access Time: 0.00025319

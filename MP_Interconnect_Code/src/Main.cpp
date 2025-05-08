@@ -128,7 +128,7 @@ public:
 
     void submit_request(const MemRequest& req) {
         unique_lock<mutex> lock(queue_mutex);
-        cout << "[ENCOLADO] PE" << unsigned(req.src) 
+        cout << "[ENQUEUED] PE" << unsigned(req.src) 
          << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;
         if (use_fifo)
             fifo_queue.push(req);
@@ -153,7 +153,7 @@ public:
     }
 };
 
-SchedulerWrapper scheduler(/*use_fifo_policy=*/true); // Cambia a false si quieres usar QoS
+SchedulerWrapper scheduler(/*use_fifo_policy=*/false); // Cambia a false si quieres usar QoS
 mutex mem_mutex;
 
 
@@ -233,7 +233,7 @@ void stepping_wait(int id) {
     std::string nombre_archivo = "../Inputs/PE" + std::to_string(id) + "_Input";
     std::string linea;
 
-    std::cout << "Hilo " << id << " esperando '1' en " << nombre_archivo << "...\n";
+    std::cout << "PE " << id << " Waiting '1' in " << nombre_archivo << "...\n";
 
     while (true) {
         std::ifstream archivo(nombre_archivo);
@@ -618,19 +618,23 @@ void broadcast_invalidate(uint8_t src, uint16_t cache_line, uint16_t qos){
 void schedulerExecutor() {
     while (true) {
         MemRequest req = scheduler.get_next_request();
-        cout << "[EJECUTANDO] PE" << unsigned(req.src) 
+        cout << "[EXECUTING] PE" << unsigned(req.src) 
         << " QoS=0x" << hex << setw(2) << setfill('0') << req.qos << endl;        lock_guard<mutex> lock(mem_mutex);
         if (req.op_type == MemOpType::WRITE) {
-            cout << "Write_EXEC" << endl;
+            //cout << "Write_EXEC" << endl;
             write_mem(req.src, req.addr, req.size, req.start_cache_line, req.qos);
         } else if (req.op_type == MemOpType::READ) {
-            cout << "Read_EXEC" << endl;
+            //cout << "Read_EXEC" << endl;
             read_mem(req.src, req.addr, req.size, req.qos);
         } else if (req.op_type == MemOpType::BROADCAST_INVALIDATE){
-            cout << "BCI_EXEC" << endl;
+            //cout << "BCI_EXEC" << endl;
             broadcast_invalidate(req.src, req.cache_line, req.qos);
         }
         
+        if(!scheduler.has_request()){
+            break;
+        }
+
     }
 }
 
@@ -676,7 +680,7 @@ void instructionReader(uint8_t src, uint16_t qos) {
             req.addr = stoul(addr_str, nullptr, 0);
             req.size = static_cast<uint16_t>(stoul(n_lines_str, nullptr, 0));
             req.start_cache_line = static_cast<uint16_t>(stoul(start_line_str, nullptr, 0));
-            cout << "WritE_mem" << endl;
+            cout << "Write_Mem OP" << endl;
 
         } else if (instruction == "READ_MEM") {
             string addr_str, size_str;
@@ -687,7 +691,7 @@ void instructionReader(uint8_t src, uint16_t qos) {
             req.op_type = MemOpType::READ;
             req.addr = stoul(addr_str, nullptr, 0);
             req.size = static_cast<uint16_t>(stoul(size_str, nullptr, 0));
-            cout << "ReAD_mem" << endl;
+            cout << "Read_Mem OP" << endl;
 
 
         } else if (instruction == "BROADCAST_INVALIDATE") {
@@ -699,8 +703,8 @@ void instructionReader(uint8_t src, uint16_t qos) {
             uint16_t cache_line = static_cast<uint16_t>(stoul(line_str, nullptr, 0));
             //broadcast_invalidate(src, cache_line, qos);
             req.op_type = MemOpType::BROADCAST_INVALIDATE;
-            req.addr = stoul(line_str, nullptr, 0);
-            cout << "Broke ASS invalidor" << endl;
+            req.cache_line = stoul(line_str, nullptr, 0);
+            cout << "Broadcast_Invalidate OP Param" << req.cache_line << endl;
             //continue;
         } else {
             cerr << "Unrecognized instruction: " << instruction << endl;
@@ -767,6 +771,12 @@ int main() {
         }
     }
 
+    for(int row=0; row<shared_memory.size();row++){
+        for(int col=0; col<shared_memory[0].size();col++){
+            shared_memory[row][col] = 9;
+        }
+    }
+
     
     pe0_cache[0][0] = 1; //Here we disable the first line.
     pe0_cache[1][1] = 0; //Here we don't disable the line
@@ -798,16 +808,28 @@ int main() {
     std::thread PE5(instructionReader,5,pe_qos_values[5]);
     std::thread PE6(instructionReader,6,pe_qos_values[6]);
     std::thread PE7(instructionReader,7,pe_qos_values[7]);
+    
 
 
     PE0.join();
+    cout << "PE 0 Finished"<< endl;
     PE1.join();
+    cout << "PE 1 Finished"<< endl;
     PE2.join();
+    cout << "PE 2 Finished"<< endl;
     PE3.join();
+    cout << "PE 3 Finished"<< endl;
     PE4.join();
+    cout << "PE 4 Finished"<< endl;
     PE5.join();
+    cout << "PE 5 Finished"<< endl;
     PE6.join();
+    cout << "PE 6 Finished"<< endl;
     PE7.join();
+    cout << "PE 7 Finished"<< endl;
+
+
+    cout << "Starting scheduler thread" << endl;
 
     std::thread scheduler_thread(schedulerExecutor);
     
@@ -835,6 +857,11 @@ int main() {
     system("python3 ../Graphics/BytesAndTime.py");
     system("python3 ../Graphics/SharedMemoryTimeAccess.py");
 
+
+    //cout << "TEST" << endl;
+    //broadcast_invalidate(0x0, 0xF, 0x0);
+
+    //(uint8_t src, uint16_t cache_line, uint16_t qos)
 
     return 0;
 }
