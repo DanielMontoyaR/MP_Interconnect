@@ -1,0 +1,5 @@
+PE 2 Bandwidth Stats:
+Total Bytes Transferred: 169
+Total Time Spent (s): 0.000532571
+Bandwidth (Bytes/s): 317329
+Shared Memory Access Time: 0.000255981

@@ -1,0 +1,5 @@
+PE 6 Bandwidth Stats:
+Total Bytes Transferred: 137
+Total Time Spent (s): 0.000662381
+Bandwidth (Bytes/s): 206830
+Shared Memory Access Time: 0.00028255

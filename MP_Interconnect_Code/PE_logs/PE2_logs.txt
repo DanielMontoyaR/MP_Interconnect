@@ -1,0 +1,57 @@
+[PE2] → Initiated Operations (QoS=72)
+[PE2] → Finished Operations (QoS=72)
+[PE2] → WRITE_MEM: Process Initiated
+[PE2] → WRITE_MEM: Error, cache line 0 is invalid
+[PE2] → WRITE_MEM: Error, cache line 1 is invalid
+[PE2] → WRITE_MEM: Error, cache line 2 is invalid
+[PE2] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
+[PE2] → WRITE_MEM: Process Initiated
+[PE2] → WRITE_MEM: Error, cache line 0 is invalid
+[PE2] → WRITE_RESP: Write Operation Unsuccessful.  System exit with STATUS = 0
+[PE2] → BROADCAST_INVALIDATE: Process Initiated
+[PE2] → INV_ACK: Process Initiated
+[PE2] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE1] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE2] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE3] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE4] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE5] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE6] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 0 (QoS=72)
+[PE2] → INV_COMPLETE: Invalidation Process Completed
+[PE2] → BROADCAST_INVALIDATE: Process Initiated
+[PE2] → INV_ACK: Process Initiated
+[PE2] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE1] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE2] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE3] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE4] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE5] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE6] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 2 (QoS=72)
+[PE2] → INV_COMPLETE: Invalidation Process Completed
+[PE2] → READ_MEM: Process Initiated
+[PE2] → READ_RESP: Process Initiated
+[PE2] → READ_RESP: Data wrote to cache memory:
+[PE2] → 999999999999999999999999999999999999999999999999999999999999999933333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333999999999999997777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777999999999999999999999999999999999999999999999999999999999999
+[PE2] → WRITE_MEM: Process Initiated
+[PE2] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE2] → BROADCAST_INVALIDATE: Process Initiated
+[PE2] → INV_ACK: Process Initiated
+[PE2] → [PE0] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE1] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE2] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE3] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE4] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE5] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE6] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → [PE7] INV_ACK: Invalidation Bit Confirmed at line 1 (QoS=72)
+[PE2] → INV_COMPLETE: Invalidation Process Completed
+[PE2] → READ_MEM: Process Initiated
+[PE2] → READ_RESP: Process Initiated
+[PE2] → READ_RESP: Data wrote to cache memory:
+[PE2] → 99999999
+[PE2] → WRITE_MEM: Process Initiated
+[PE2] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1
+[PE2] → WRITE_MEM: Process Initiated
+[PE2] → WRITE_RESP: Write Operation Successful.  System exit with STATUS = 1

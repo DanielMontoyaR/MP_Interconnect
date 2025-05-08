@@ -1,0 +1,5 @@
+PE 5 Bandwidth Stats:
+Total Bytes Transferred: 201
+Total Time Spent (s): 0.000519201
+Bandwidth (Bytes/s): 387133
+Shared Memory Access Time: 0.00025482

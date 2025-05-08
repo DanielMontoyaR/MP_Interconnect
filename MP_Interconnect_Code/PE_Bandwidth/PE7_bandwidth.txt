@@ -1,0 +1,5 @@
+PE 7 Bandwidth Stats:
+Total Bytes Transferred: 153
+Total Time Spent (s): 0.00064718
+Bandwidth (Bytes/s): 236410
+Shared Memory Access Time: 0.00035097
